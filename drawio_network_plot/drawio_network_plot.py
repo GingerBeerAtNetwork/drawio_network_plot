@@ -1,6 +1,5 @@
 import xml.etree.ElementTree as ET
-import logging
-
+import traceback
 
 class NetPlot():
     '''
@@ -67,63 +66,57 @@ class NetPlot():
 
 
     def addNode(self,nodeName,nodeDescription='',nodeType=''):
-        try:
-            shapeParameters = self._getMXgraphShape(nodeType)
-            mxCell = ET.SubElement(self.root,
-                                    'mxCell', 
-                                    id=nodeName,
-                                    value=nodeName,
-                                    style=("verticalLabelPosition=bottom;"
-                                            "html=1;"
-                                            "verticalAlign=top;"
-                                            "aspect=fixed;align=center;"
-                                            "pointerEvents=1;"
-                                            f"{shapeParameters['style']}"
-                                            ""),
-                                    parent="1",
-                                    vertex="1")
-            mxGeometry = ET.SubElement(mxCell, 'mxGeometry',width=shapeParameters['width'] ,height=shapeParameters['height'] )
-            mxGeometry.set('as','geometry')
-            return
-        except Exception as e:
-            logging.error('Error in adding Node: {}'.format(e))
+        shapeParameters = self._getMXgraphShape(nodeType)
+        mxCell = ET.SubElement(self.root,
+                                'mxCell', 
+                                id=nodeName,
+                                value=nodeName,
+                                style=("verticalLabelPosition=bottom;"
+                                        "html=1;"
+                                        "verticalAlign=top;"
+                                        "aspect=fixed;align=center;"
+                                        "pointerEvents=1;"
+                                        f"{shapeParameters['style']}"
+                                        ""),
+                                parent="1",
+                                vertex="1")
+        mxGeometry = ET.SubElement(mxCell, 'mxGeometry',width=shapeParameters['width'] ,height=shapeParameters['height'] )
+        mxGeometry.set('as','geometry')
 
     def addNodeList(self,nodeListOfDictionary):
-        try:
-            for node in nodeListOfDictionary:
-                self.addNode(nodeName=node['nodeName'],nodeDescription=node['nodeDescription'],nodeType=node['nodeType'])
-            return
-        except Exception as e:
-            logging.error('Error in adding Node List: {}'.format(e))
+        for node in nodeListOfDictionary:
+            self.addNode(nodeName=node['nodeName'],nodeDescription=node['nodeDescription'],nodeType=node['nodeType'])
+        return
 
     def addLink(self,sourceNodeID,destinationNodeID):
         try: 
             for mxCell in self.root:
+                print("mxCell.attrib['id']",mxCell.attrib['id'])
+                print("type(mxCell.attrib['id'])",type(mxCell.attrib['id']))
+                print("sourceNodeID",sourceNodeID)
+                print("type(sourceNodeID)",type(sourceNodeID))
                 if mxCell.attrib['id'] == sourceNodeID:
-                    logging.debug('Source Node ID {} found'.format(sourceNodeID))
+                    print('Element found ' + mxCell.attrib['id'])
                     break
+            mxCell = ET.SubElement(self.root,
+                                    'mxCell',
+                                    id=sourceNodeID+destinationNodeID,
+                                    style="endFill=0;endArrow=none;",
+                                    parent="1",
+                                    source=sourceNodeID,
+                                    target=destinationNodeID,
+                                    edge="1")
+            print(mxCell)
+            mxGeometry = ET.SubElement(mxCell, 'mxGeometry')
+            mxGeometry.set('as','geometry')
             return
         except Exception as e:
-            logging.error('Error in adding Link: {}'.format(e))
-
-        mxCell = ET.SubElement(self.root,
-                                'mxCell',
-                                id=sourceNodeID+destinationNodeID,
-                                style="endFill=0;endArrow=none;",
-                                parent="1",
-                                source=sourceNodeID,
-                                target=destinationNodeID,
-                                edge="1")
-        mxGeometry = ET.SubElement(mxCell, 'mxGeometry')
-        mxGeometry.set('as','geometry')
+            traceback.print_exc()
 
     def addLinkList(self,linkListOfDictionary):
-        try:
-            for link in linkListOfDictionary:
-                self.addLink(sourceNodeID=link['sourceNodeID'] , destinationNodeID=link['destinationNodeID'] )
-            return
-        except Exception as e:
-            logging.error('Error in adding Link List: {}'.format(e))
+        for link in linkListOfDictionary:
+            self.addLink(sourceNodeID=link['sourceNodeID'] , destinationNodeID=link['destinationNodeID'] )
+        return
 
     def display_xml(self):
         return ET.tostring(self.mxfile) 
